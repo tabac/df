@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+option go_package = "github.com/tabac/df/pb";
+
+package df;
+
+service DataFusionExecutor {
+    rpc CreateSession(CreateSessionRequest) returns (CreateSessionResponse) {}
+    rpc ExecuteQuery(ExecuteQueryRequest) returns (stream ExecuteQueryResponse) {}
+}
+
+message CreateSessionRequest {}
+message CreateSessionResponse{}
+message ExecuteQueryRequest {
+    uint64 id = 1;
+}
+
+message ExecuteQueryResponse {
+    uint64 id = 1;
+    uint64 request_id = 2;
+}
