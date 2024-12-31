@@ -1,7 +1,12 @@
+use std::panic;
+
 use tokio_stream::StreamExt;
 use tonic::transport::Channel;
 
-use crate::df::{data_fusion_executor_client::DataFusionExecutorClient, ExecuteQueryRequest};
+use crate::{
+    df::{data_fusion_executor_client::DataFusionExecutorClient, ExecuteQueryRequest},
+    server::DataFusionExecutorNetwork,
+};
 
 #[derive(Debug, Clone)]
 pub struct DataFusionExecutorClientImpl {
@@ -9,8 +14,22 @@ pub struct DataFusionExecutorClientImpl {
 }
 
 impl DataFusionExecutorClientImpl {
-    pub async fn new() -> Result<Self, Box<dyn std::error::Error>> {
-        let client = DataFusionExecutorClient::connect("http://[::1]:50051").await?;
+    pub async fn new(
+        network: DataFusionExecutorNetwork,
+    ) -> Result<Self, Box<dyn std::error::Error>> {
+        let dst = match network {
+            DataFusionExecutorNetwork::Tcp => String::from("http://[::1]:50051"),
+
+            DataFusionExecutorNetwork::Unix => {
+                // Probably not possible through Unix Domain Socket.
+                // Look at the following:
+                //  - https://github.com/softprops/hyperlocal/tree/main
+                //  - https://github.com/hyperium/tonic/issues/742
+                panic!("df-rs: unimplemented")
+            }
+        };
+
+        let client = DataFusionExecutorClient::connect(dst).await?;
 
         Ok(DataFusionExecutorClientImpl { client })
     }

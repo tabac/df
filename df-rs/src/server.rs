@@ -1,5 +1,7 @@
 use std::pin::Pin;
 
+use tokio::net::UnixListener;
+use tokio_stream::wrappers::UnixListenerStream;
 use tokio_stream::Stream;
 use tonic::transport::Server;
 use tonic::{Request, Response, Status};
@@ -9,23 +11,51 @@ use crate::df::{
     CreateSessionRequest, CreateSessionResponse, ExecuteQueryRequest, ExecuteQueryResponse,
 };
 
-#[derive(Debug, Default)]
-pub struct DataFusionExecutorServerImpl {}
+#[derive(Debug)]
+pub enum DataFusionExecutorNetwork {
+    Tcp,
+    Unix,
+}
+
+#[derive(Debug)]
+pub struct DataFusionExecutorServerImpl {
+    network: DataFusionExecutorNetwork,
+    address: String,
+}
 
 impl DataFusionExecutorServerImpl {
-    pub fn new() -> Self {
-        DataFusionExecutorServerImpl::default()
+    pub fn new(network: DataFusionExecutorNetwork) -> Self {
+        let address = match network {
+            DataFusionExecutorNetwork::Tcp => String::from("[::1]:50051"),
+            DataFusionExecutorNetwork::Unix => String::from("/tmp/df.sock"),
+        };
+
+        DataFusionExecutorServerImpl { network, address }
     }
 
     pub async fn run(self) -> Result<(), Box<dyn std::error::Error>> {
         log::info!("df-rs: Running server.");
 
-        let addr = "[::1]:50051".parse()?;
+        match self.network {
+            DataFusionExecutorNetwork::Tcp => {
+                let addr = self.address.parse()?;
 
-        Server::builder()
-            .add_service(DataFusionExecutorServer::new(self))
-            .serve(addr)
-            .await?;
+                Server::builder()
+                    .add_service(DataFusionExecutorServer::new(self))
+                    .serve(addr)
+                    .await?;
+            }
+            DataFusionExecutorNetwork::Unix => {
+                let listener = UnixListener::bind(&self.address)?;
+
+                let stream = UnixListenerStream::new(listener);
+
+                Server::builder()
+                    .add_service(DataFusionExecutorServer::new(self))
+                    .serve_with_incoming(stream)
+                    .await?;
+            }
+        }
 
         Ok(())
     }
