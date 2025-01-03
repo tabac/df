@@ -26,7 +26,7 @@ pub struct DataFusionExecutorServerImpl {
 impl DataFusionExecutorServerImpl {
     pub fn new(network: DataFusionExecutorNetwork) -> Self {
         let address = match network {
-            DataFusionExecutorNetwork::Tcp => String::from("[::1]:50051"),
+            DataFusionExecutorNetwork::Tcp => String::from("127.0.0.1:50051"),
             DataFusionExecutorNetwork::Unix => String::from("/tmp/df.sock"),
         };
 
@@ -34,7 +34,7 @@ impl DataFusionExecutorServerImpl {
     }
 
     pub async fn run(self) -> Result<(), Box<dyn std::error::Error>> {
-        log::info!("df-rs: Running server.");
+        log::info!("df-rs: Running server ({:?}).", self.network);
 
         match self.network {
             DataFusionExecutorNetwork::Tcp => {

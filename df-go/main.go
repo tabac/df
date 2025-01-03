@@ -1,5 +1,12 @@
 package main
 
+/*
+#cgo LDFLAGS: -L./lib -ldf_rs_ffi
+#include "./lib/df.h"
+#include <stdlib.h>
+*/
+import "C"
+
 import (
 	"fmt"
 	"log"
@@ -62,6 +69,10 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+	case "ffi-tcp":
+		C.start_tcp_ffi()
+	case "ffi-unix":
+		C.start_unix_ffi()
 	}
 }
 

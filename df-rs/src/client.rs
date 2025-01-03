@@ -18,8 +18,7 @@ impl DataFusionExecutorClientImpl {
         network: DataFusionExecutorNetwork,
     ) -> Result<Self, Box<dyn std::error::Error>> {
         let dst = match network {
-            DataFusionExecutorNetwork::Tcp => String::from("http://[::1]:50051"),
-
+            DataFusionExecutorNetwork::Tcp => String::from("http://127.0.0.1:50051"),
             DataFusionExecutorNetwork::Unix => {
                 // Probably not possible through Unix Domain Socket.
                 // Look at the following:
