@@ -1,3 +1,4 @@
 **/target
 df-go/df
 **.dylib
+**/lib
